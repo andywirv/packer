@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,6 +37,16 @@ func (s *StepConnectSSH) Run(state multistep.StateBag) multistep.StepAction {
 	cancel := make(chan struct{})
 	waitDone := make(chan bool, 1)
 	go func() {
+		seconds := 0
+		n, err := strconv.Atoi(os.Getenv("DELAY_SSH_CONNECTION"))
+		if err != nil {
+			log.Printf("Invalid timeout seconds '%s', using default", strconv.Itoa(seconds))
+		} else {
+			seconds = n
+			ui.Say("Delaying SSH connection attempt by " + strconv.Itoa(seconds) + "s")
+		}
+		time.Sleep(time.Duration(seconds) * time.Second)
+
 		ui.Say("Waiting for SSH to become available...")
 		comm, err = s.waitForSSH(state, cancel)
 		waitDone <- true
